@@ -537,13 +537,11 @@ fn ok_to_delete(
     keep_files: &HashSet<String>,
     partition_columns: &[String],
 ) -> Result<bool, DeltaTableError> {
-    if valid_files.contains(location) // file is still being tracked in table
+    Ok(
+        !(valid_files.contains(location) // file is still being tracked in table
         || keep_files.contains(&location.to_string()) // file is associated with a version that we are keeping
-        || is_hidden_directory(partition_columns, location)?
-    {
-        return Ok(false);
-    }
-    Ok(true)
+        || is_hidden_directory(partition_columns, location)?),
+    )
 }
 
 /// List files no longer referenced by a Delta table and are older than the retention threshold.
