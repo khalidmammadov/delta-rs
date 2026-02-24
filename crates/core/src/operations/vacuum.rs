@@ -318,7 +318,12 @@ impl VacuumBuilder {
                 let obj_meta = obj_meta.map_err(DeltaTableError::from)?;
                 // If the file is not an expired tombstone
                 if !already_queued.contains(&obj_meta.location)
-                    && ok_to_delete(&obj_meta.location, &valid_files, &keep_files, partition_columns)? 
+                    && ok_to_delete(
+                        &obj_meta.location,
+                        &valid_files,
+                        &keep_files,
+                        partition_columns,
+                    )?
                 {
                     // For files without tombstones (uncommitted or orphaned files),
                     // check their physical age to protect recently written files from deletion.
@@ -527,14 +532,15 @@ fn is_hidden_directory(partition_columns: &[String], path: &Path) -> Result<bool
 /// A file should NOT be deleted if it is still tracked in the table,
 /// associated with a kept version, or is a hidden directory.
 fn ok_to_delete(
-    location: &Path, 
-    valid_files: &HashSet<Path>, 
-    keep_files: &HashSet<String>, 
-    partition_columns: &[String]
+    location: &Path,
+    valid_files: &HashSet<Path>,
+    keep_files: &HashSet<String>,
+    partition_columns: &[String],
 ) -> Result<bool, DeltaTableError> {
     if valid_files.contains(location) // file is still being tracked in table
         || keep_files.contains(&location.to_string()) // file is associated with a version that we are keeping
-        || is_hidden_directory(partition_columns, location)? {
+        || is_hidden_directory(partition_columns, location)?
+    {
         return Ok(false);
     }
     Ok(true)
